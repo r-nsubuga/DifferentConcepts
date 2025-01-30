@@ -1,6 +1,6 @@
 using Budget.Entities;
 
-namespace Budget.Services;
+namespace Budget.Services.Budgets;
 
 public interface IBudgetService
 {

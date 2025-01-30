@@ -1,6 +1,6 @@
 using Budget.Dtos;
 using Budget.Entities;
-using Budget.Services;
+using Budget.Services.Budgets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

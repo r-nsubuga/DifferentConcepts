@@ -3,6 +3,11 @@ using Budget.Events;
 using Budget.Helpers;
 using Budget.Repositories;
 using Budget.Services;
+using Budget.Services.Budgets;
+using Budget.Services.MQ;
+using Budget.Services.MQ.Publishers;
+using Budget.Services.MQ.Subscribers;
+using Budget.Services.Tickets;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
@@ -16,19 +21,24 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<BudgetDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
+builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>(provider => 
+    new RabbitMqService("localhost:5672", "budgets"));
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddTransient<BudgetUpdatePublisher>();
+builder.Services.AddTransient<BudgetUpdateSubscriber>();
+builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddMediatR(cfg=> 
     cfg.RegisterServicesFromAssemblies(typeof(BudgetCreatedEventHandler).Assembly));
 builder.Services.AddSingleton<ElasticsearchClient>(sp =>
 {
     var settings = new ElasticsearchClientSettings(new Uri("https://localhost:9200"))
-        .Authentication(new BasicAuthentication("elastic", "############"))
-        .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
+            .Authentication(new BasicAuthentication("elastic", "ghfgdfhjvghcfdgfc45"))
+            .ServerCertificateValidationCallback((sender, certificate, chain, errors) => true)
         ;
     return new ElasticsearchClient(settings);
 });
-builder.Services.AddScoped<ISearchService, SearchService>();
-builder.Services.AddScoped<IBudgetService, BudgetService>();
-builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 
 var app = builder.Build();
 

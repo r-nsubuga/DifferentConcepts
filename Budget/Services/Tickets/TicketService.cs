@@ -1,6 +1,6 @@
 using Budget.Dtos;
 
-namespace Budget.Services;
+namespace Budget.Services.Tickets;
 
 public class TicketService: ITicketService
 {

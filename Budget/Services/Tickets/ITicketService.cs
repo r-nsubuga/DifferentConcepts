@@ -1,7 +1,7 @@
 using Budget.Dtos;
 using Budget.Entities.Ticketing;
 
-namespace Budget.Services;
+namespace Budget.Services.Tickets;
 
 public interface ITicketService
 {

@@ -4,7 +4,7 @@ using Budget.Helpers;
 using Budget.Repositories;
 using MediatR;
 
-namespace Budget.Services;
+namespace Budget.Services.Budgets;
 
 public class BudgetService: IBudgetService
 {
