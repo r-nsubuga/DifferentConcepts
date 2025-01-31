@@ -1,4 +1,5 @@
 using Budget.Helpers;
+using Budget.Entities.BudgetDomain;
 using MediatR;
 
 namespace Budget.Events;
@@ -14,6 +15,9 @@ public class BudgetCreatedEventHandler: INotificationHandler<BudgetCreatedEvent>
     
     public async Task Handle(BudgetCreatedEvent notification, CancellationToken cancellationToken)
     {
+        
+        //Publish to broker for queues and processing eg Rabbitmq
+        
         await _searchService.IndexAsync(new
         {
             Id = notification.Id,
