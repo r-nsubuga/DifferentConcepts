@@ -33,7 +33,7 @@ public class BudgetService: IBudgetService
     public async Task CreateBudget(BudgetEntity budget)
     {
         var budgetResponse = await _budgetRepository.CreateBudget(budget);
-        var @event = new BudgetCreatedEvent(budgetResponse.Id, budgetResponse.Name);
-        await _publisher.Publish(@event);
+        //var @event = new BudgetCreatedEvent(budgetResponse.Id, budgetResponse.Name);
+        //await _publisher.Publish(@event);
     }
 }
