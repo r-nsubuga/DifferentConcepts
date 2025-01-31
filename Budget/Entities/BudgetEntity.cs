@@ -11,8 +11,10 @@ public class BudgetEntity: BaseEntity
     
     public decimal? ActualTotalAmount { get; set; }
 
-    public BudgetEntity()
+    public BudgetEntity(string name, decimal? estimatedTotalAmount)
     {
+        Name = name;
+        EstimatedTotalAmount = estimatedTotalAmount;
         AddDomainEvent(new BudgetCreatedEvent());
     }
 } 
