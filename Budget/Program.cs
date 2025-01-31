@@ -1,3 +1,4 @@
+using System.Reflection;
 using Budget.Data;
 using Budget.Events;
 using Budget.Helpers;
@@ -5,6 +6,7 @@ using Budget.Repositories;
 using Budget.Services;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,8 +18,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<BudgetDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-builder.Services.AddMediatR(cfg=> 
-    cfg.RegisterServicesFromAssemblies(typeof(BudgetCreatedEventHandler).Assembly));
+
+builder.Services
+    .AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+builder.Services.AddScoped<BudgetDbContext>(provider =>
+{
+    var options = provider.GetRequiredService<DbContextOptions<BudgetDbContext>>();
+    var mediator = provider.GetRequiredService<IMediator>();
+    return new BudgetDbContext(options, mediator);
+});
+
 builder.Services.AddSingleton<ElasticsearchClient>(sp =>
 {
     var settings = new ElasticsearchClientSettings(new Uri("https://localhost:9200"))
