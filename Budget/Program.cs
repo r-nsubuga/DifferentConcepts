@@ -2,6 +2,7 @@ using System.Reflection;
 using Budget.Data;
 using Budget.Events;
 using Budget.Helpers;
+using Budget.RabbitMQ;
 using Budget.Repositories;
 using Budget.Services;
 using Elastic.Clients.Elasticsearch;
@@ -40,6 +41,7 @@ builder.Services.AddSingleton<ElasticsearchClient>(sp =>
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
+builder.Services.AddScoped<IRabbitMqProducer, RabbitMqProducer>();
 
 var app = builder.Build();
 
