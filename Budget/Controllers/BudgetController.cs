@@ -1,6 +1,5 @@
 using Budget.Dtos;
 using Budget.Entities;
-using Budget.RabbitMQ;
 using Budget.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +11,10 @@ namespace Budget.Controllers;
 public class BudgetController: ControllerBase
 {
     private readonly IBudgetService _budgetService;
-    private readonly IRabbitMqProducer _rabbitMqProducer;
 
-    public BudgetController(IBudgetService budgetService,IRabbitMqProducer rabbitMqProducer)
+    public BudgetController(IBudgetService budgetService)
     {
         _budgetService = budgetService;
-        _rabbitMqProducer = rabbitMqProducer;
     }
     
     //[Authorize]
@@ -27,7 +24,6 @@ public class BudgetController: ControllerBase
     {
         var budget = new BudgetEntity(budgetDto.Name, budgetDto.EstimatedAmount);
         await _budgetService.CreateBudget(budget);
-        await _rabbitMqProducer.SendProductMessage(budget);
         return Ok();
     }
 }
