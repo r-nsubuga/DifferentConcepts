@@ -17,16 +17,12 @@ public class BudgetController: ControllerBase
         _budgetService = budgetService;
     }
     
-    [Authorize]
+    //[Authorize]
     [HttpPost]
     [Route("createBudget")]
     public async Task<IActionResult> CreateBudget([FromBody] CreateBudgetDto budgetDto)
     {
-        var budget = new BudgetEntity
-        {
-            Name = budgetDto.Name,
-            EstimatedTotalAmount = budgetDto.EstimatedAmount
-        };
+        var budget = new BudgetEntity(budgetDto.Name, budgetDto.EstimatedAmount);
         await _budgetService.CreateBudget(budget);
         return Ok();
     }
