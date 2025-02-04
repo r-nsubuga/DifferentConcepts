@@ -3,7 +3,7 @@ namespace Budget.Services.MQ.Subscribers;
 public class BudgetUpdateSubscriber
 {
     private readonly IRabbitMqService _rabbitMqService;
-    private const string ExchangeName = "budget_updates";
+    private const string ExchangeName = "budgets";
 
     public BudgetUpdateSubscriber(IRabbitMqService rabbitMqService)
     {
@@ -14,6 +14,7 @@ public class BudgetUpdateSubscriber
     {
         var queueName = $"{userId}_queue";
         var routingKey = $"budget.updates.{budgetId}";
+        Console.WriteLine($"Subscribing to {queueName}");
         _rabbitMqService.Subscribe(queueName,ExchangeName,routingKey, onMessageReceived);
     }
 }

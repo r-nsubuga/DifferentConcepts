@@ -24,7 +24,7 @@ builder.Services.AddDbContext<BudgetDbContext>(options =>
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>(provider => 
-    new RabbitMqService("localhost:5672", "budgets"));
+    new RabbitMqService("localhost", "budgets"));
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddTransient<BudgetUpdatePublisher>();
 builder.Services.AddTransient<BudgetUpdateSubscriber>();

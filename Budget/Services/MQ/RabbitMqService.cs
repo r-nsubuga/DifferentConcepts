@@ -13,7 +13,7 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
     
     public RabbitMqService(string hostName, string exchangeName, string exchangeType = ExchangeType.Topic)
     {
-        var factory = new ConnectionFactory{ HostName = hostName };
+        var factory = new ConnectionFactory{ HostName = hostName, UserName = "guest", Password = "guest" };
         _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
         _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
         _channel.ExchangeDeclareAsync(exchange: exchangeName, type: exchangeType, durable:true);
@@ -29,8 +29,9 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
     public async Task Subscribe(string queueName, string exchangeName, string routingKey, Action<string> onMessageReceived)
     {
         await _channel.QueueDeclareAsync(queue:queueName, durable:true, exclusive:false, autoDelete: false);
+        Console.WriteLine($"Subscribed to queue {queueName}");
         await _channel.QueueBindAsync(queue:queueName, exchange:exchangeName, routingKey:routingKey);
-
+        
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += (model, ea) =>
         {
@@ -42,8 +43,6 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
         };
         await _channel.BasicConsumeAsync(queueName, autoAck:true, consumer: consumer);
         
-        Console.WriteLine(" Press [enter] to exit.");
-        Console.ReadLine();
     }
     
     // public void Dispose()
