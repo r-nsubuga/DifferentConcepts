@@ -23,21 +23,24 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
     {
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         await _channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, body: body);
-        Console.WriteLine($"Published message to {routingKey}: {message}");
+        Console.WriteLine($"Published message to {routingKey}: {body}");
     }
 
     public async Task Subscribe(string queueName, string exchangeName, string routingKey, Action<string> onMessageReceived)
     {
         await _channel.QueueDeclareAsync(queue:queueName, durable:true, exclusive:false, autoDelete: false);
         Console.WriteLine($"Subscribed to queue {queueName}");
-        await _channel.QueueBindAsync(queue:queueName, exchange:exchangeName, routingKey:routingKey);
+        await _channel.QueueBindAsync(queue:queueName, exchange:exchangeName, routingKey:"budget.#");
         
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
-            Console.WriteLine($" [x] Received {message}");
+            Console.WriteLine($"Body length: {body.Length}");
+            Console.WriteLine($"Body content: {BitConverter.ToString(body)}");
+            var key = ea.RoutingKey;
+            Console.WriteLine($" [x] Received {message}, routing key: {key}");
             onMessageReceived.Invoke(message);
             return Task.CompletedTask;
         };
