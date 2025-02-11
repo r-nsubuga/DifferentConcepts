@@ -7,6 +7,7 @@ using Budget.Services.Budgets;
 using Budget.Services.MQ;
 using Budget.Services.MQ.Publishers;
 using Budget.Services.MQ.Subscribers;
+using Budget.Services.SignalR;
 using Budget.Services.Tickets;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
@@ -39,6 +40,19 @@ builder.Services.AddSingleton<ElasticsearchClient>(sp =>
         ;
     return new ElasticsearchClient(settings);
 });
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<RabbitMqListener>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Explicitly allow React app
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // Required for SignalR with authentication
+    });
+});
 
 var app = builder.Build();
 
@@ -51,4 +65,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 app.UseHttpsRedirection();
+app.UseCors("AllowReactApp");
+app.UseRouting();
+app.MapHub<MessageHub>("/messageHub");
 app.Run();

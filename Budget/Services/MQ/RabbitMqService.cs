@@ -23,7 +23,7 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
     {
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         await _channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, body: body);
-        Console.WriteLine($"Published message to {routingKey}: {body}");
+        Console.WriteLine($"Published message to {routingKey}: {message}");
     }
 
     public async Task Subscribe(string queueName, string exchangeName, string routingKey, Action<string> onMessageReceived)
