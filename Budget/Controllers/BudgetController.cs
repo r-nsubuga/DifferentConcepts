@@ -12,15 +12,12 @@ namespace Budget.Controllers;
 public class BudgetController: ControllerBase
 {
     private readonly IBudgetService _budgetService;
-    private readonly BudgetUpdateSubscriber _subscriber;
 
-    public BudgetController(IBudgetService budgetService, BudgetUpdateSubscriber subscriber)
+    public BudgetController(IBudgetService budgetService)
     {
         _budgetService = budgetService;
-        _subscriber = subscriber;
     }
     
-    //[Authorize]
     [HttpPost]
     [Route("createBudget")]
     public async Task<IActionResult> CreateBudget([FromBody] CreateBudgetDto budgetDto)
@@ -31,14 +28,6 @@ public class BudgetController: ControllerBase
             EstimatedTotalAmount = budgetDto.EstimatedAmount
         };
         await _budgetService.CreateBudget(budget);
-        return Ok();
-    }
-    
-    [HttpGet]
-    [Route("subscribeToBudget")]
-    public async Task<IActionResult> SubscribeToUpdate(int id)
-    {
-        _subscriber.SubscribeToBudgetUpdates("gjhfghdsyu00389", id, s => {var budgetId = id.ToString(); });
         return Ok();
     }
 }

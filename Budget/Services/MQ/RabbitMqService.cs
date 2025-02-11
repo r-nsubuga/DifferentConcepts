@@ -26,33 +26,6 @@ public class RabbitMqService: IAsyncDisposable, IRabbitMqService
         Console.WriteLine($"Published message to {routingKey}: {message}");
     }
 
-    public async Task Subscribe(string queueName, string exchangeName, string routingKey, Action<string> onMessageReceived)
-    {
-        await _channel.QueueDeclareAsync(queue:queueName, durable:true, exclusive:false, autoDelete: false);
-        Console.WriteLine($"Subscribed to queue {queueName}");
-        await _channel.QueueBindAsync(queue:queueName, exchange:exchangeName, routingKey:"budget.#");
-        
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += (model, ea) =>
-        {
-            var body = ea.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            Console.WriteLine($"Body length: {body.Length}");
-            Console.WriteLine($"Body content: {BitConverter.ToString(body)}");
-            var key = ea.RoutingKey;
-            Console.WriteLine($" [x] Received {message}, routing key: {key}");
-            onMessageReceived.Invoke(message);
-            return Task.CompletedTask;
-        };
-        await _channel.BasicConsumeAsync(queueName, autoAck:true, consumer: consumer);
-        
-    }
-    
-    // public void Dispose()
-    // {
-    //     // TODO release managed resources here
-    // }
-
     public async ValueTask DisposeAsync()
     {
         await _channel.DisposeAsync();

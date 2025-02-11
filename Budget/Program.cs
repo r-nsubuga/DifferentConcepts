@@ -2,13 +2,11 @@ using Budget.Data;
 using Budget.Events;
 using Budget.Helpers;
 using Budget.Repositories;
-using Budget.Services;
 using Budget.Services.Budgets;
 using Budget.Services.MQ;
 using Budget.Services.MQ.Publishers;
 using Budget.Services.MQ.Subscribers;
 using Budget.Services.SignalR;
-using Budget.Services.Tickets;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
@@ -22,16 +20,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<BudgetDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
+
 builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>(provider => 
     new RabbitMqService("localhost", "budgets"));
-builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddTransient<BudgetUpdatePublisher>();
-builder.Services.AddTransient<BudgetUpdateSubscriber>();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<RabbitMqListener>();
+
 builder.Services.AddScoped<ISearchService, SearchService>();
-builder.Services.AddMediatR(cfg=> 
-    cfg.RegisterServicesFromAssemblies(typeof(BudgetCreatedEventHandler).Assembly));
 builder.Services.AddSingleton<ElasticsearchClient>(sp =>
 {
     var settings = new ElasticsearchClientSettings(new Uri("https://localhost:9200"))
@@ -40,8 +39,9 @@ builder.Services.AddSingleton<ElasticsearchClient>(sp =>
         ;
     return new ElasticsearchClient(settings);
 });
-builder.Services.AddSignalR();
-builder.Services.AddHostedService<RabbitMqListener>();
+
+builder.Services.AddMediatR(cfg=> 
+    cfg.RegisterServicesFromAssemblies(typeof(BudgetCreatedEventHandler).Assembly));
 
 builder.Services.AddCors(options =>
 {
