@@ -6,6 +6,7 @@ public class MessageHub: Hub
 {
     public async Task SendMessage(string message)
     {
+        //Clients.Group()
         await Clients.All.SendAsync("ReceiveMessage", message);
     }
     

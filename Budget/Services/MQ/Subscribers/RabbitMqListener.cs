@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using Budget.Services.SignalR;
 using Microsoft.AspNetCore.SignalR;
@@ -9,8 +10,11 @@ namespace Budget.Services.MQ.Subscribers;
 public class RabbitMqListener: BackgroundService, IAsyncDisposable
 {
     private readonly IHubContext<MessageHub> _context;
-    private IChannel _channel;
-    private IConnection _connection;
+    private readonly IChannel _channel;
+    private readonly IConnection _connection;
+    private readonly ConcurrentDictionary<string, string> _clientQueues = new();
+    
+    private const string ExchangeName = "budgets";
     
     public RabbitMqListener(IHubContext<MessageHub> context)
     {
@@ -20,36 +24,53 @@ public class RabbitMqListener: BackgroundService, IAsyncDisposable
         _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
         _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
         
-        var ExchangeName = "budgets";
         _channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Topic, durable: true);
-        
-        var queueName = "budget.queue";
-        //var routingKeyPattern = "event.specific.#"; 
-        
-        _channel.QueueDeclareAsync(queue:queueName, durable:true, exclusive:false, autoDelete: false);
-        Console.WriteLine($"Subscribed to queue {queueName}");
-        _channel.QueueBindAsync(queue:queueName, exchange:ExchangeName, routingKey:"budget.#");
     }
     
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public void SubscribeClient(string clientId, string routingKey)
     {
+        if (_clientQueues.ContainsKey(clientId))
+            return; // Client already subscribed
+
+        // Create a unique queue for the client
+        var queueName = $"queue_{clientId}_{Guid.NewGuid()}";
+        _clientQueues[clientId] = queueName;
+
+        _channel.QueueDeclareAsync(queue: queueName,
+            durable: true,
+            exclusive: false, // Queue will be deleted when client disconnects
+            autoDelete: true,
+            arguments: null);
+
+        _channel.QueueBindAsync(queue: queueName, exchange: ExchangeName, routingKey: routingKey);
+
         var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += (model, ea) =>
+        consumer.ReceivedAsync +=  (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
-            var routingKey = ea.RoutingKey;
-            
-            _context.Clients.All.SendAsync("ReceiveMessage", message);
-            Console.WriteLine(" [x] Received {0}", message);
+            var receivedRoutingKey = ea.RoutingKey;
+
+            // Send message only to the connected client
+            _context.Clients.Client(clientId).SendAsync("ReceiveMessage", message);
             return Task.CompletedTask;
         };
-        var queueName = "budget.queue";
-        await _channel.BasicConsumeAsync(queueName, autoAck:true, consumer: consumer);
+
+        _channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer);
+    }
+
+    public void UnsubscribeClient(string clientId)
+    {
+        if (_clientQueues.TryRemove(clientId, out var queueName))
+        {
+            _channel.QueueDeleteAsync(queueName);
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
         await _channel.DisposeAsync();
     }
+    
+    protected override Task ExecuteAsync(CancellationToken stoppingToken) => Task.CompletedTask;
 }
